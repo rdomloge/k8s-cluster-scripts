@@ -69,7 +69,12 @@ done
 
 echo Installing OpenFaaS
 ssh ubuntu@$master "curl -sLS https://dl.get-arkade.dev | sudo sh"
-ssh ubuntu@$master export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+ssh ubuntu@$master "echo export KUBECONFIG=/etc/rancher/k3s/k3s.yaml > .bash_profile"
+ssh ubuntu@$master "echo alias kc=sudo kubeectl >> .bash_profile"
 ssh ubuntu@$master sudo chmod +r /etc/rancher/k3s/k3s.yaml
-ssh ubuntu@$master arkade install openfaas --gateways 2 --load-balancer false
+ssh ubuntu@$master arkade install openfaas --gateways 2 --load-balancer false --set faasIdler.dryRun=false
 
+echo Installing OpenFaaS CLI
+ssh ubuntu@$master "curl -sSL https://cli.openfaas.com | sh"
+ssh ubuntu@$master sudo cp faas-cli-arm64 /usr/local/bin/faas-cli
+ssh ubuntu@$master sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas
