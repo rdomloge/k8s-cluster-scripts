@@ -90,9 +90,13 @@ done
 echo Installing OpenFaaS
 ssh ubuntu@$master "curl -sLS https://dl.get-arkade.dev | sudo sh"
 ssh ubuntu@$master "echo export KUBECONFIG=/etc/rancher/k3s/k3s.yaml > .bash_profile"
-ssh ubuntu@$master "echo alias kc=sudo kubeectl >> .bash_profile"
+ssh ubuntu@$master "echo alias kc=sudo kubectl >> .bash_profile"
 ssh ubuntu@$master sudo chmod +r /etc/rancher/k3s/k3s.yaml
 ssh ubuntu@$master arkade install openfaas --gateways 2 --load-balancer false --set faasIdler.dryRun=false
+
+# Once OpenFaas is installed, use these 2 lines to find out the password for logging into the interface, with the username 'admin'
+# PASSWORD=$(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode) && \
+# echo "OpenFaaS admin password: $PASSWORD"
 
 echo Installing OpenFaaS CLI
 ssh ubuntu@$master "curl -sSL https://cli.openfaas.com | sh"
