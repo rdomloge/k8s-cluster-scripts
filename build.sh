@@ -18,7 +18,7 @@ all+=($master)
 cmdlinefile=/boot/firmware/cmdline.txt
 cmdlinecontents='cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory net.ifnames=0 dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=LABEL=writable rootfstype=ext4 elevator=deadline rootwait fixrtc'
 
-for i in "${all[@]}"
+for i in "${nodes[@]}"
 do
    :
    echo Adding key to $i
