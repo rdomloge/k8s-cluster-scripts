@@ -61,7 +61,7 @@ masterkey=$(ssh ubuntu@$master cat .ssh/id_rsa.pub)
 echo Master key: $masterkey
 
 # Before we join the nodes, we have to rename all of them otherwise k3s won't allow them to join with existing names
-ssh ubuntu@$master "sudo bash -c 'echo k8s-master-1 > /etc/hostname' && sudo reboot"
+ssh ubuntu@$master "sudo bash -c 'echo k8s-master-1 > /etc/hostname'"
 COUNTER=1
 for i in "${nodes[@]}"
 do
@@ -98,5 +98,8 @@ echo Installing OpenFaaS CLI
 ssh ubuntu@$master "curl -sSL https://cli.openfaas.com | sh"
 ssh ubuntu@$master sudo cp faas-cli-arm64 /usr/local/bin/faas-cli
 ssh ubuntu@$master sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas
+
+echo 'All done - rebooting master to get hostname rename and boot config changes'
+sudo reboot
 
 rem https://github.com/carlosedp/cluster-monitoring.git
