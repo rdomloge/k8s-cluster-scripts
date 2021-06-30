@@ -67,7 +67,7 @@ for i in "${nodes[@]}"
 do
    :
    echo Renaming node $i
-   ssh ubuntu@$i "sudo bash -c 'echo k8s-node-$COUNTER > /etc/hostname' && sudo reboot"
+   sshpass -e ssh ubuntu@$i "sudo bash -c 'echo k8s-node-$COUNTER > /etc/hostname' && sudo reboot"
    let COUNTER++
 done
 
