@@ -5,7 +5,8 @@ echo SSHPASS=mypassword
 echo export SSHPASS
 
 
-
+version=v1.21.2+k3s1
+echo Version of k3s is $version
 
 pubkey='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDG4kPSGvLp9hPue4UolYIW9Rf05rnkcSrcRTp7SzV1Ybs/NTyRirk07QB/R8n3de4rEc0FvXsvtjRQzGkACqr5sYywqpghx9NzhNidgZlaDHoBOHFR6aDwiQKBLHtD8z0eHyL7fNYE3qx3+uxh0zMuKzmTitYSVgGVju8bl5zef5R4JQ5+P8kJQggvPWlWUTdo1gJ+yGO7Bn+o5GdsR+v3twc3SVrNgDoKIGXlTSk9E6J4dKASCYkaFme7LSxrw3c9sify8sjc2CFqMvCse6NJT+uZkzSMBixn6uK8mSULJlRk6OF7eki8xK4Iqfwn2T8Ywg81FqdEGxAWjdtu3CjRlR5gH1Cx9hijoZJpWX+r2YGij1Frqe06O+YC3UNIH9SFyeNlbsE2lmhyH+1J3YxJn6jhFgX5sjxz+YKUMS/9+kXazjVK7oBVJTxwvLD+0oriUJ3bAeX1KGJ9+Oe9sHRuc3LieSIXMEggXRDTvZLad5tJybeyEcB/XHUKXC4bF8VroYN3oOep/sAx7c5B+BQvYeX+MJlb9p18+f7YULhG6DwuhZuhnlSqimUs81eeuGuzgSm6/WaJ3H7d5ctc20So+OfPovXD80N7c0/T+WMYEIK/bwljgsSskvnpZpQXEnqXXyFShBw5l61TFqo5e7FQeA1A94pXQbFAuAg/MFZCtw== bca\domloger@LP032542'
 echo "$pubkey"
@@ -21,6 +22,7 @@ cmdlinecontents='cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory net.i
 for i in "${all[@]}"
 do
    :
+   sshpass -e ssh -oStrictHostKeyChecking=no ubuntu@$i "sudo apt update"
    echo Adding key to $i
    sshpass -e ssh -oStrictHostKeyChecking=no ubuntu@$i "mkdir -p .ssh && touch .ssh/authorized_keys && echo $pubkey >> .ssh/authorized_keys"
    echo Key copied
@@ -38,10 +40,6 @@ done
 
 echo Waiting for nodes to reboot
 sleep 60
-
-
-version=v1.21.2+k3s1
-echo Version of k3s is $version
 
 echo Generating key pair on master
 sshpass -e ssh ubuntu@$master ssh-keygen -q -f /home/ubuntu/.ssh/id_rsa -P \"\"
@@ -66,6 +64,10 @@ COUNTER=1
 for i in "${nodes[@]}"
 do
    :
+   echo Adding master public key to node $i
+   sshpass -e ssh ubuntu@$i "echo $masterkey >> .ssh/authorized_keys"
+   echo Installing NFS driver on $i
+   ssh ubuntu@$i sudo apt install -y nfs-kernel-server
    echo Renaming node $i
    sshpass -e ssh ubuntu@$i "sudo bash -c 'echo k8s-node-$COUNTER > /etc/hostname' && sudo reboot"
    let COUNTER++
@@ -74,17 +76,8 @@ done
 for i in "${nodes[@]}"
 do
    :
-   echo Adding master public key to node $i
-   sshpass -e ssh ubuntu@$i "echo $masterkey >> .ssh/authorized_keys"
    echo Creating cluster node on $i
    ssh ubuntu@$master k3sup join --ip $i --server-ip $master --user ubuntu --k3s-version=$version
-done
-
-for i in "${all[@]}"
-do
-   :
-   echo Installing NFS driver on $i
-   ssh ubuntu@$i sudo apt install -y nfs-kernel-server
 done
 
 echo Installing OpenFaaS
