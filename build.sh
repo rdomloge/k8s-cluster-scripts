@@ -11,7 +11,7 @@ pubkey='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDG4kPSGvLp9hPue4UolYIW9Rf05rnkcSrc
 echo "$pubkey"
 
 master=10.0.0.12
-nodes=("10.0.0.9" "10.0.0.10" "10.0.0.11" "10.0.0.15" "10.0.0.16" "10.0.0.17" "10.0.0.18")
+nodes=("10.0.0.9" "10.0.0.10" "10.0.0.11" "10.0.0.15" "10.0.0.16" "10.0.0.17" "10.0.0.18" "10.0.0.19")
 all=("${nodes[@]}")
 all+=($master)
 
@@ -90,7 +90,7 @@ done
 echo Installing OpenFaaS
 ssh ubuntu@$master "curl -sLS https://dl.get-arkade.dev | sudo sh"
 ssh ubuntu@$master "echo export KUBECONFIG=/etc/rancher/k3s/k3s.yaml > .bash_profile"
-ssh ubuntu@$master "echo alias kc=sudo kubectl >> .bash_profile"
+ssh ubuntu@$master "echo alias k='kubectl' >> .bash_profile"
 ssh ubuntu@$master sudo chmod +r /etc/rancher/k3s/k3s.yaml
 ssh ubuntu@$master arkade install openfaas --gateways 2 --load-balancer false --set faasIdler.dryRun=false
 
