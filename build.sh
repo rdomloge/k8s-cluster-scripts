@@ -12,7 +12,7 @@ pubkey='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDG4kPSGvLp9hPue4UolYIW9Rf05rnkcSrc
 echo "$pubkey"
 
 master=10.0.0.12
-nodes=("10.0.0.9" "10.0.0.10" "10.0.0.11" "10.0.0.15" "10.0.0.16" "10.0.0.17" "10.0.0.18" "10.0.0.19")
+nodes=("10.0.0.9" "10.0.0.10" "10.0.0.11" "10.0.0.15" "10.0.0.16" "10.0.0.17" "10.0.0.18" "10.0.0.19" "10.0.0.20")
 all=("${nodes[@]}")
 all+=($master)
 
@@ -98,5 +98,3 @@ ssh ubuntu@$master sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas
 
 echo 'All done - rebooting master to get hostname rename and boot config changes'
 sudo reboot
-
-rem https://github.com/carlosedp/cluster-monitoring.git
