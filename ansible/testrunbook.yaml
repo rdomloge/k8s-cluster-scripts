@@ -130,7 +130,7 @@
       - memory=low
 
   - name: Taint for 32-bit
-    when: inventory_hostname in groups['32_bit_nodes']
+    when: inventory_hostname in groups['bit_32_nodes']
     delegate_to: "{{ master }}"
     command: "kubectl taint nodes {{ inventory_hostname }} {{ item }}:NoSchedule"
     with_items:
