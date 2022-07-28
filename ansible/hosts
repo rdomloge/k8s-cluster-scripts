@@ -1,1 +1,17 @@
-10.0.0.14 ansible_user=pi
+[master]
+10.0.0.12 ansible_user=ubuntu ansible_password=badmuthafucka
+
+[nodes]
+ansible-k8s-node-11 ansible_host=10.0.0.13 ansible_sudo_pass=ubuntu
+ansible-k8s-node-12 ansible_host=10.0.0.14 ansible_sudo_pass=ubuntu
+
+[low_power_nodes]
+ansible-k8s-node-11 ansible_host=10.0.0.13
+ansible-k8s-node-12 ansible_host=10.0.0.14
+
+[32_bit_nodes]
+ansible-k8s-node-11 ansible_host=10.0.0.13
+
+[all:children]
+nodes
+master
