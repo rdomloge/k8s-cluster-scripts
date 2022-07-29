@@ -1,0 +1,67 @@
+---
+- name: Configure master
+  hosts: master
+  
+  # Variables
+  vars_files:
+  - vars.yml
+
+  tasks:
+    - name: Check if we need to generate a key
+      stat:
+        path: ~/.ssh/id_rsa.pub
+      register: rsa_keypair
+
+    - name: Generate keypair
+      when: not rsa_keypair.stat.exists
+      openssh_keypair:
+        path: ~/.ssh/id_rsa
+    
+# echo Adding keypair to its own authorised keys
+# sshpass -e ssh ubuntu@$master "cat .ssh/id_rsa.pub >> .ssh/authorized_keys"
+
+
+    - name: Download k3sup
+      get_url:
+        url: https://get.k3sup.dev 
+        dest: "{{ k3sup_download_location }}"
+    
+    - name: Bootstrap k3sup
+      command: sh "{{ k3sup_download_location }}"
+
+    - name: Clean up
+      file: 
+        path: "{{ k3sup_download_location }}"
+        state: absent
+      
+    - name: Copy to bin
+      shell: sudo cp k3sup-arm64 /usr/local/bin/k3sup
+
+    - name: Get master to add its pubkey to its own known hosts # could NOT get this to work correctly by generating a key pair and using the builtin support for known_host
+      expect:
+        command: "ssh ubuntu@{{ ansible_default_ipv4.address }} sleep 0"
+        responses:
+          (?i)Are you sure: "yes"
+          (?i)password: "{{ default_user_new_pass }}"
+
+    - name: Load own key
+      slurp:
+        src: "{{ localpubkey }}"
+      register: public_key_data
+
+    - name: Authorize self to SSH to self (authorise own key)
+      authorized_key:
+        user: ubuntu
+        state: present
+        key: "{{ public_key_data['content'] | b64decode }}"
+
+    - name: Install master node - k3sup
+      shell: k3sup install --ip {{ ansible_default_ipv4.address }} --user ubuntu --k3s-version={{ version }}
+
+    - name: Make config file readable by ubunto so we can run kubectl without sudo
+      become: yes
+      file:
+        path: /etc/rancher/k3s/k3s.yaml
+        owner: ubuntu
+        group: ubuntu
+    

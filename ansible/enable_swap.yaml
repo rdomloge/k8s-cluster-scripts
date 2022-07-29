@@ -1,0 +1,76 @@
+---
+- name: Configure master
+  hosts: master
+  
+  # Variables
+  vars_files:
+  - vars.yml
+
+  tasks:
+
+    - name: Check if we need to create a swap file
+      stat:
+        path: /swapfile
+      register: swap
+
+    - name: Create swap file
+      when: not swap.stat.exists
+      become: yes
+      command: fallocate -l 1G /swapfile
+      tags:
+        - swap.file.create
+
+    - name: Change swap file permissions
+      become: yes
+      file: path="/swapfile"
+            owner=root
+            group=root
+            mode=0600
+      tags:
+        - swap.file.permissions
+
+
+    - name: "Check swap file type"
+      command: file /swapfile
+      register: swapfile
+      tags:
+        - swap.file.mkswap
+
+
+    - name: Make swap file
+      become: yes
+      command: "mkswap /swapfile"
+      when: swapfile.stdout.find('swap file') == -1
+      tags:
+        - swap.file.mkswap
+
+
+    - name: Write swap entry in fstab
+      when: not swap.stat.exists
+      become: yes
+      mount: name=none
+            src=/swapfile
+            fstype=swap
+            opts=sw
+            passno=0
+            dump=0
+            state=present
+      tags:
+        - swap.fstab
+
+
+    - name: Mount swap
+      become: yes
+      command: "swapon /swapfile"
+      when: ansible_swaptotal_mb < 1
+      tags:
+        - swap.file.swapon
+
+    - name: Tune swap
+      become: yes
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "{{ item.line }}"
+      loop:
+          - { line: vm.swappiness=10 }
+          - { line: vm.vfs_cache_pressure=50 }

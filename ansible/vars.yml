@@ -1,5 +1,6 @@
-version: v1.21.2+k3s1
-master: 10.0.0.12
+#version: v1.21.2+k3s1
+version: v1.24.3+k3s1
+master: 10.0.0.14
 cmdlinefile: /boot/firmware/cmdline.txt # ubuntu
 #cmdlinefile: /boot/cmdline.txt # raspbian
 cmdlinecontents: 'cgroup_memory=1 cgroup_enable=memory'
@@ -7,3 +8,5 @@ pubkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 default_user: ubuntu
 default_user_default_pass: ubuntu
 default_user_new_pass: temporary111
+k3sup_download_location: /tmp/k3sup.installer
+localpubkey: /home/ubuntu/.ssh/id_rsa.pub
