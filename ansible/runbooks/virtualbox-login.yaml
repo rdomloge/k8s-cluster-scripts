@@ -1,0 +1,57 @@
+---
+- name: Configure nodes
+  hosts: virtualbox
+  ## we can't gather facts until we have set the default password and swapped keys (we'll manually invoke it later)
+  gather_facts: false
+
+  # Variables
+  vars_files:
+  - vars.yml
+
+  tasks:
+
+  - name: Check if we need to set password on first login
+    stat:
+      path: .ansiblelogincomplete
+    register: loginneeded
+
+  - name: Add host to known_hosts
+    when: not loginneeded.stat.exists
+    delegate_to: 127.0.0.1
+    expect:
+      command: ssh -oStrictHostKeyChecking=no {{ default_user }}@{{ ansible_host }} sleep 0
+      timeout: 5
+      responses:
+        (?i)password: "{{ default_user_default_pass }}"
+
+  - name: Change password on initial login
+    when: not loginneeded.stat.exists
+    delegate_to: 127.0.0.1
+    become: no
+    expect:
+      command: sshpass -p {{ default_user_default_pass }} ssh {{ default_user }}@{{ ansible_host }} passwd
+      timeout: 5
+      responses:
+        "Current password:": "{{ default_user_default_pass }}"
+        "New password:": "{{ default_user_new_pass }}"
+        "Retype new password:": "{{ default_user_new_pass }}"
+    register: status
+
+  - name: Change 'become' pass, to match login password
+    connection: local
+    set_fact:
+      ansible_become_pass: "{{ default_user_new_pass }}"
+
+  - name: Copy Ansible server pubkey to remote machine
+    when: not loginneeded.stat.exists
+    delegate_to: 127.0.0.1
+    become: no
+    command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
+
+  - name: Create signal file to show that this has been completed successfully
+    when: not loginneeded.stat.exists
+    file: 
+      path: .ansiblelogincomplete
+      state: touch
+
+  

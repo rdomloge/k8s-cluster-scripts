@@ -1,0 +1,10 @@
+---
+- name: Parent runbook for running all runbooks needed to setup a cluster
+  hosts: all
+  
+  # Variables
+  vars_files:
+  - vars.yml
+  
+  tasks:
+  - import_tasks: login.yaml

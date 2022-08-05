@@ -1,0 +1,25 @@
+---
+- name: Bootstrap - first login, key exchange, disable unattended upgrade
+  hosts: all
+
+  # Variables
+  vars_files:
+  - vars.yml
+    
+
+  tasks:
+
+    ## This installer pops up a dialog telling the user something about requiring a reboot and this is the only way to
+    ## stop Ansible hanging otherwise.
+    - name: Install bits missing in Ubuntu 22 that k3s needs
+      shell: yes | sudo DEBIAN_FRONTEND=noninteractive apt install -y -q -q linux-modules-extra-raspi # needed for vxlan support in Ubuntu 22+
+      # become: yes
+      # command: apt install -y -q -q linux-modules-extra-raspi
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+    
+    - name: Reboot for new kernel after adding linux-modules-extra-raspi
+      become: yes
+      become_user: root
+      reboot:
+        reboot_timeout: 120

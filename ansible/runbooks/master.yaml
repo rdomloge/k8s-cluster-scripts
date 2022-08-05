@@ -58,7 +58,7 @@
     - name: Install master node - k3sup
       shell: k3sup install --ip {{ ansible_default_ipv4.address }} --user ubuntu --k3s-version={{ version }}
 
-    - name: Make config file readable by ubunto so we can run kubectl without sudo
+    - name: Make config file readable by ubuntu so we can run kubectl without sudo
       become: yes
       file:
         path: /etc/rancher/k3s/k3s.yaml
