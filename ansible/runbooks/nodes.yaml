@@ -1,47 +1,41 @@
----
-- name: Configure nodes
-  hosts: nodes
+- name: Fetch master node pubkey
+  when: inventory_hostname in groups['nodes']
+  slurp:
+    src: /home/ubuntu/.ssh/id_rsa.pub
+  delegate_to: "{{ groups['master'][0] }}"
+  register: master_pubkey
 
-  # Variables
-  vars_files:
-  - vars.yml
+- name: Write master pubkey to authorized_keys
+  when: inventory_hostname in groups['nodes']
+  lineinfile:
+    path: /home/ubuntu/.ssh/authorized_keys
+    line: "{{ master_pubkey['content'] | b64decode }}"
+    create: yes
 
-  tasks:
+- name: Get master to add pubkey to known hosts # could NOT get this to work correctly by generating a key pair and using the builtin support for known_host
+  delegate_to: "{{ groups['master'][0] }}"
+  expect:
+    command: "ssh ubuntu@{{ ansible_default_ipv4.address }} sleep 0"
+    responses:
+        (?i)Are you sure: "yes"
+        (?i)password: "{{ default_user_new_pass }}"
 
-  - name: Fetch master node pubkey
-    slurp:
-      src: /home/ubuntu/.ssh/id_rsa.pub
-    delegate_to: "{{ groups['master'][0] }}"
-    register: master_pubkey
+- name: Join node to cluster
+  when: inventory_hostname in groups['nodes']
+  command: "k3sup join --ip {{ ansible_default_ipv4.address }} --server-ip {{ master }} --user ubuntu --k3s-version={{ version }}"
+  delegate_to: "{{ groups['master'][0] }}"
 
-  - name: Write master pubkey to authorized_keys
-    lineinfile:
-      path: /home/ubuntu/.ssh/authorized_keys
-      line: "{{ master_pubkey['content'] | b64decode }}"
-      create: yes
+- name: Taint for low power/memory
+  when: inventory_hostname in groups['low_power_nodes']
+  delegate_to: "{{ groups['master'][0] }}"
+  command: "kubectl taint nodes {{ inventory_hostname }} {{ item }}:NoSchedule"
+  with_items:
+    - cpu=low
+    - memory=low
 
-  - name: Get master to add pubkey to known hosts # could NOT get this to work correctly by generating a key pair and using the builtin support for known_host
-    delegate_to: "{{ groups['master'][0] }}"
-    expect:
-      command: "ssh ubuntu@{{ ansible_default_ipv4.address }} sleep 0"
-      responses:
-          (?i)Are you sure: "yes"
-
-  - name: Join node to cluster
-    command: "k3sup join --ip {{ ansible_default_ipv4.address }} --server-ip {{ master }} --user ubuntu --k3s-version={{ version }}"
-    delegate_to: "{{ groups['master'][0] }}"
-
-  - name: Taint for low power/memory
-    when: inventory_hostname in groups['low_power_nodes']
-    delegate_to: "{{ groups['master'][0] }}"
-    command: "kubectl taint nodes {{ inventory_hostname }} {{ item }}:NoSchedule"
-    with_items:
-      - cpu=low
-      - memory=low
-
-  - name: Taint for 32-bit
-    when: inventory_hostname in groups['bit_32_nodes']
-    delegate_to: "{{ groups['master'][0] }}"
-    command: "kubectl taint nodes {{ inventory_hostname }} {{ item }}:NoSchedule"
-    with_items:
-      - bit=32
+- name: Taint for 32-bit
+  when: inventory_hostname in groups['bit_32_nodes']
+  delegate_to: "{{ groups['master'][0] }}"
+  command: "kubectl taint nodes {{ inventory_hostname }} {{ item }}:NoSchedule"
+  with_items:
+    - bit=32

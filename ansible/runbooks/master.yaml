@@ -1,67 +1,87 @@
----
-- name: Configure master
-  hosts: master
+- name: Check if we need to generate a key for root (needed for k3sup install)
+  when: inventory_hostname in groups['master']
+  become: yes
+  stat:
+    path: /root/.ssh/id_rsa.pub
+  register: rsa_keypair
+
+- name: Generate keypair for root
+  when: inventory_hostname in groups['master'] and not rsa_keypair.stat.exists
+  become: yes
+  openssh_keypair:
+    path: /root/.ssh/id_rsa
+
+- name: Download k3sup
+  when: inventory_hostname in groups['master']
+  get_url:
+    url: https://get.k3sup.dev 
+    dest: "{{ k3sup_download_location }}"
+
+- name: Bootstrap k3sup
+  when: inventory_hostname in groups['master']
+  command: sh "{{ k3sup_download_location }}"
+
+- name: Clean up
+  when: inventory_hostname in groups['master']
+  file: 
+    path: "{{ k3sup_download_location }}"
+    state: absent
   
-  # Variables
-  vars_files:
-  - vars.yml
+- name: Copy to bin [ARM]
+  become: yes
+  when: inventory_hostname not in groups['virtualbox'] and inventory_hostname in groups['master']
+  copy:
+    src: k3sup-arm64
+    dest: /usr/local/bin/k3sup
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+    mode: u=rwx,g=rx,o=r
 
-  tasks:
-    - name: Check if we need to generate a key
-      stat:
-        path: ~/.ssh/id_rsa.pub
-      register: rsa_keypair
+- name: Copy to bin [AMD]
+  become: yes
+  when: inventory_hostname in groups['virtualbox'] and inventory_hostname in groups['master']
+  copy:
+    src: k3sup
+    dest: /usr/local/bin/k3sup
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+    mode: u=rwx,g=rx,o=r
 
-    - name: Generate keypair
-      when: not rsa_keypair.stat.exists
-      openssh_keypair:
-        path: ~/.ssh/id_rsa
-    
-# echo Adding keypair to its own authorised keys
-# sshpass -e ssh ubuntu@$master "cat .ssh/id_rsa.pub >> .ssh/authorized_keys"
+- name: Get master to add its pubkey to its own known hosts # could NOT get this to work correctly by generating a key pair and using the builtin support for known_host
+  when: inventory_hostname in groups['master']
+  expect:
+    command: "ssh ubuntu@{{ ansible_default_ipv4.address }} sleep 0"
+    responses:
+      (?i)Are you sure: "yes"
+      (?i)password: "{{ default_user_new_pass }}"
+
+- name: Load master key (so we can use it in the next step)
+  slurp:
+    src: '.ssh/id_rsa.pub'
+  register: master_key
+
+- name: Authorize self to SSH to self (authorise own key)
+  when: inventory_hostname in groups['master']
+  authorized_key:
+    user: ubuntu
+    state: present
+    key: "{{ master_key['content'] | b64decode }}"
+    path: "/home/ubuntu/.ssh/authorized_keys"
 
 
-    - name: Download k3sup
-      get_url:
-        url: https://get.k3sup.dev 
-        dest: "{{ k3sup_download_location }}"
-    
-    - name: Bootstrap k3sup
-      command: sh "{{ k3sup_download_location }}"
+- name: Install master node - k3sup
+  become: yes
+  become_method: sudo
+  when: inventory_hostname in groups['master']
+  command: "k3sup install --local --k3s-version={{ version }}"
 
-    - name: Clean up
-      file: 
-        path: "{{ k3sup_download_location }}"
-        state: absent
-      
-    - name: Copy to bin
-      shell: sudo cp k3sup-arm64 /usr/local/bin/k3sup
-
-    - name: Get master to add its pubkey to its own known hosts # could NOT get this to work correctly by generating a key pair and using the builtin support for known_host
-      expect:
-        command: "ssh ubuntu@{{ ansible_default_ipv4.address }} sleep 0"
-        responses:
-          (?i)Are you sure: "yes"
-          (?i)password: "{{ default_user_new_pass }}"
-
-    - name: Load own key
-      slurp:
-        src: "{{ localpubkey }}"
-      register: public_key_data
-
-    - name: Authorize self to SSH to self (authorise own key)
-      authorized_key:
-        user: ubuntu
-        state: present
-        key: "{{ public_key_data['content'] | b64decode }}"
-
-    - name: Install master node - k3sup
-      shell: k3sup install --ip {{ ansible_default_ipv4.address }} --user ubuntu --k3s-version={{ version }}
-
-    - name: Make config file readable by ubuntu so we can run kubectl without sudo
-      become: yes
-      file:
-        path: /etc/rancher/k3s/k3s.yaml
-        owner: ubuntu
-        group: ubuntu
+- name: Make config file readable by ubuntu so we can run kubectl without sudo
+  when: inventory_hostname in groups['master']
+  become: yes
+  file:
+    path: /etc/rancher/k3s/k3s.yaml
+    owner: ubuntu
+    group: ubuntu
     

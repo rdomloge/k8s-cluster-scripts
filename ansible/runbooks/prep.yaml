@@ -1,59 +1,70 @@
----
-- name: Bootstrap - key exchange, disable unattended upgrade, install basics
-  hosts: all
+# ---------------------------------------------------------------------------------------------------
+# section for trying to stop unattended upgrade from locking the apt-get app and breaking the playbook
+- name: Disable unattended upgrade
+  become: yes
+  become_method: sudo
+  replace:
+    path: /etc/apt/apt.conf.d/20auto-upgrades
+    regexp: '1'
+    replace: '0'
+    backup: yes
+  register: unattendedupgrade
 
-  # Variables
-  vars_files:
-  - vars.yml
+# This could be later, but would require a second reboot, which is slow. We do it now so no need for extra reboots
+- name: Set OS properties necessary for running containers
+  when: inventory_hostname not in groups['virtualbox']
+  become: yes
+  become_user: root
+  lineinfile:
+    path: "{{cmdlinefile}}"
+    backrefs: yes
+    regexp: '^(.*(fixrtc|splash))$'
+    line: '\1 {{cmdlinecontents}}'
+  register: ospropertieschanged
 
-  tasks:  
-  # ---------------------------------------------------------------------------------------------------
-  # section for trying to stop unattended upgrade from locking the apt-get app and breaking the playbook
-  - name: Disable unattended upgrade
-    become: yes
-    replace:
-      path: /etc/apt/apt.conf.d/20auto-upgrades
-      regexp: '1'
-      replace: '0'
-      backup: yes
-    register: unattendedupgrade
-
-  # This could be later, but would require a second reboot, which is slow. We do it now so no need for extra reboots
-  - name: Set OS properties necessary for running containers
-    become: yes
-    become_user: root
-    lineinfile:
-      path: "{{cmdlinefile}}"
-      backrefs: yes
-      regexp: '(^.*fixrtc.*$)'
-      line: '\1 {{cmdlinecontents}}'
-    register: ospropertieschanged
-
-  - name: Reboot for disable (and cgroup) to take effect
-    become: yes
-    become_user: root
-    reboot:
-      reboot_timeout: 300
-    when: unattendedupgrade.changed or ospropertieschanged.changed
-  # ---------------------------------------------------------------------------------------------------
+- name: Reboot for disable (and cgroup) to take effect
+  become: yes
+  become_user: root
+  reboot:
+    reboot_timeout: 600
+  when: inventory_hostname not in groups['virtualbox'] and unattendedupgrade.changed or ospropertieschanged.changed
+# ---------------------------------------------------------------------------------------------------
 
 
-  - name: Update
-    become: yes
-    apt: update_cache=true cache_valid_time=3600
-      #upgrade: dist
-    
-  - name: Install essentials
-    become: yes
-    apt:
-      pkg: 
-      - htop
-      - net-tools
-      - vim
-      - nfs-kernel-server # needed for mounting the NAS NFS shares
-      state: present
+- name: Update
+  become: yes
+  apt: update_cache=true cache_valid_time=3600
+    #upgrade: dist
+  
+- name: Install essentials - part 1
+  become: yes
+  apt:
+    pkg: 
+    - htop
+    - net-tools
+    - vim
+    state: present
 
-  - name: Set hostname
-    become: yes
-    hostname:
-      name: "{{ inventory_hostname }}"
+- name: Install essentials - part 2
+  become: yes
+  apt:
+    pkg:
+    - nfs-kernel-server # needed for mounting the NAS NFS shares
+    state: present
+
+- name: Install essentials - part 3
+  become: yes
+  apt:
+    pkg:
+    - pip
+    state: present
+
+- name: Install python modules
+  become: yes
+  pip:
+    name: pexpect
+
+- name: Set hostname
+  become: yes
+  hostname:
+    name: "{{ inventory_hostname }}"

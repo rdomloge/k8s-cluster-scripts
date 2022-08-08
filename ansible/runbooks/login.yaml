@@ -1,45 +1,38 @@
----
-- name: Bootstrap - first login, key exchange, disable unattended upgrade
-  hosts: all
-  ## we can't gather facts until we have set the default password and swapped keys (we'll manually invoke it later)
-  gather_facts: false
+- name: Check if we need to set password on first login
+  when: inventory_hostname not in groups['virtualbox']
+  wait_for:
+    timeout: 0
+  register: connect_rs
+  ignore_unreachable: yes
 
-  # Variables
-  vars_files:
-  - vars.yml
-    
+- name: Change password on initial login
+  when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
+  delegate_to: 127.0.0.1
+  become: no
+  expect:
+    command: sshpass -p {{ default_user_default_pass }} ssh {{ default_user }}@{{ ansible_host }}
+    timeout: 60
+    responses:
+        "Current password:": "{{ default_user_default_pass }}"
+        "New password:": "{{ default_user_new_pass }}"
+        "Retype new password:": "{{ default_user_new_pass }}"
+  register: status
 
-  tasks:
-  - name: Check if we need to set password on first login
-    when: inventory_hostname not in groups['virtualbox']
-    wait_for:
-      timeout: 0
-    register: connect_rs
-    ignore_unreachable: yes
+- name: Change 'become' pass, to match login password
+  connection: local
+  set_fact:
+    ansible_become_pass: "{{ default_user_new_pass }}"
 
-  - name: Change password on initial login
-    when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
-    delegate_to: 127.0.0.1
-    become: no
-    expect:
-      command: sshpass -p {{ default_user_default_pass }} ssh {{ default_user }}@{{ ansible_host }}
-      timeout: 60
-      responses:
-          "Current password:": "{{ default_user_default_pass }}"
-          "New password:": "{{ default_user_new_pass }}"
-          "Retype new password:": "{{ default_user_new_pass }}"
-    register: status
+- name: Copy Ansible server pubkey to remote machine
+  when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
+  delegate_to: 127.0.0.1
+  become: no
+  command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
 
-  - name: Change 'become' pass, to match login password
-    connection: local
-    set_fact:
-      ansible_become_pass: "{{ default_user_new_pass }}"
+- name: Generate SSH keys
+  when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
+  openssh_keypair:
+    path: /home/ubuntu/.ssh/id_rsa
 
-  - name: Copy Ansible server pubkey to remote machine
-    when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
-    delegate_to: 127.0.0.1
-    become: no
-    command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
-
-  # FROM THIS POINT IT SHOULD NOT BE NECESSARY TO USE SSHPASS OR PASSWORDS AT ALL
-  # AT SOME POINT WE NEED TO THINK ABOUT DISABLING PASSWORD-BASED AUTHENTICATION
+# FROM THIS POINT IT SHOULD NOT BE NECESSARY TO USE SSHPASS OR PASSWORDS AT ALL
+# AT SOME POINT WE NEED TO THINK ABOUT DISABLING PASSWORD-BASED AUTHENTICATION

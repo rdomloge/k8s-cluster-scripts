@@ -1,10 +1,19 @@
 ---
 - name: Parent runbook for running all runbooks needed to setup a cluster
-  hosts: all
-  
+  hosts: all  
   # Variables
   vars_files:
   - vars.yml
-  
+  ## we can't gather facts until we have set the default password and swapped keys (we'll manually invoke it later)
+  gather_facts: false
+
   tasks:
-  - import_tasks: login.yaml
+    - import_tasks: login.yaml
+    - import_tasks: virtualbox-login.yaml
+
+    - name: Gather facts
+      setup:
+        
+    - import_tasks: prep.yaml
+    - import_tasks: master.yaml
+    - import_tasks: nodes.yaml

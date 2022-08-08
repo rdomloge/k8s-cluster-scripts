@@ -1,57 +1,55 @@
----
-- name: Configure nodes
-  hosts: virtualbox
-  ## we can't gather facts until we have set the default password and swapped keys (we'll manually invoke it later)
-  gather_facts: false
+- name: Check if we need to set password on first login
+  when: inventory_hostname in groups['virtualbox']
+  wait_for:
+    timeout: 0
+  register: connect_rs
+  ignore_unreachable: yes
 
-  # Variables
-  vars_files:
-  - vars.yml
+- name: Add host to known_hosts
+  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  delegate_to: 127.0.0.1
+  expect:
+    command: ssh -oStrictHostKeyChecking=no {{ default_user }}@{{ ansible_host }} sleep 0
+    timeout: 5
+    responses:
+      (?i)password: "{{ default_user_default_pass }}"
 
-  tasks:
+- name: Change password on initial login
+  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  delegate_to: 127.0.0.1
+  become: no
+  expect:
+    command: sshpass -p {{ default_user_default_pass }} ssh {{ default_user }}@{{ ansible_host }} passwd
+    timeout: 5
+    responses:
+      "Current password:": "{{ default_user_default_pass }}"
+      "New password:": "{{ default_user_new_pass }}"
+      "Retype new password:": "{{ default_user_new_pass }}"
+  register: status
 
-  - name: Check if we need to set password on first login
-    stat:
-      path: .ansiblelogincomplete
-    register: loginneeded
+- name: Change 'become' pass, to match login password
+  connection: local
+  set_fact:
+    ansible_become_pass: "{{ default_user_new_pass }}"
 
-  - name: Add host to known_hosts
-    when: not loginneeded.stat.exists
-    delegate_to: 127.0.0.1
-    expect:
-      command: ssh -oStrictHostKeyChecking=no {{ default_user }}@{{ ansible_host }} sleep 0
-      timeout: 5
-      responses:
-        (?i)password: "{{ default_user_default_pass }}"
+- name: Copy Ansible server pubkey to remote machine
+  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  delegate_to: 127.0.0.1
+  become: no
+  command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
 
-  - name: Change password on initial login
-    when: not loginneeded.stat.exists
-    delegate_to: 127.0.0.1
-    become: no
-    expect:
-      command: sshpass -p {{ default_user_default_pass }} ssh {{ default_user }}@{{ ansible_host }} passwd
-      timeout: 5
-      responses:
-        "Current password:": "{{ default_user_default_pass }}"
-        "New password:": "{{ default_user_new_pass }}"
-        "Retype new password:": "{{ default_user_new_pass }}"
-    register: status
+- name: Generate SSH keys
+  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  openssh_keypair:
+    path: /home/ubuntu/.ssh/id_rsa
 
-  - name: Change 'become' pass, to match login password
-    connection: local
-    set_fact:
-      ansible_become_pass: "{{ default_user_new_pass }}"
-
-  - name: Copy Ansible server pubkey to remote machine
-    when: not loginneeded.stat.exists
-    delegate_to: 127.0.0.1
-    become: no
-    command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
-
-  - name: Create signal file to show that this has been completed successfully
-    when: not loginneeded.stat.exists
-    file: 
-      path: .ansiblelogincomplete
-      state: touch
-
+- name: Remove need for sudo password
+  become: yes
+  when: inventory_hostname in groups['virtualbox']
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%sudo'
+    line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
   
