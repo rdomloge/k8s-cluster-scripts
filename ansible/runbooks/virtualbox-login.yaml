@@ -1,12 +1,11 @@
 - name: Check if we need to set password on first login
-  when: inventory_hostname in groups['virtualbox']
   wait_for:
     timeout: 0
   register: connect_rs
   ignore_unreachable: yes
 
 - name: Add host to known_hosts
-  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  when: connect_rs is unreachable
   delegate_to: 127.0.0.1
   expect:
     command: ssh -oStrictHostKeyChecking=no {{ default_user }}@{{ ansible_host }} sleep 0
@@ -15,7 +14,7 @@
       (?i)password: "{{ default_user_default_pass }}"
 
 - name: Change password on initial login
-  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  when: connect_rs is unreachable
   delegate_to: 127.0.0.1
   become: no
   expect:
@@ -33,19 +32,18 @@
     ansible_become_pass: "{{ default_user_new_pass }}"
 
 - name: Copy Ansible server pubkey to remote machine
-  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  when: connect_rs is unreachable
   delegate_to: 127.0.0.1
   become: no
   command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
 
 - name: Generate SSH keys
-  when: inventory_hostname in groups['virtualbox'] and connect_rs is unreachable
+  when: connect_rs is unreachable
   openssh_keypair:
     path: /home/ubuntu/.ssh/id_rsa
 
 - name: Remove need for sudo password
   become: yes
-  when: inventory_hostname in groups['virtualbox']
   lineinfile:
     path: /etc/sudoers
     state: present

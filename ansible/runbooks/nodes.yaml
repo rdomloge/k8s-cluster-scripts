@@ -1,12 +1,10 @@
 - name: Fetch master node pubkey
-  when: inventory_hostname in groups['nodes']
   slurp:
     src: /home/ubuntu/.ssh/id_rsa.pub
   delegate_to: "{{ groups['master'][0] }}"
   register: master_pubkey
 
 - name: Write master pubkey to authorized_keys
-  when: inventory_hostname in groups['nodes']
   lineinfile:
     path: /home/ubuntu/.ssh/authorized_keys
     line: "{{ master_pubkey['content'] | b64decode }}"
@@ -21,7 +19,6 @@
         (?i)password: "{{ default_user_new_pass }}"
 
 - name: Join node to cluster
-  when: inventory_hostname in groups['nodes']
   command: "k3sup join --ip {{ ansible_default_ipv4.address }} --server-ip {{ master }} --user ubuntu --k3s-version={{ version }}"
   delegate_to: "{{ groups['master'][0] }}"
 

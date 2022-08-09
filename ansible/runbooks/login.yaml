@@ -1,12 +1,11 @@
 - name: Check if we need to set password on first login
-  when: inventory_hostname not in groups['virtualbox']
   wait_for:
     timeout: 0
   register: connect_rs
   ignore_unreachable: yes
 
 - name: Change password on initial login
-  when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
+  when: connect_rs is unreachable
   delegate_to: 127.0.0.1
   become: no
   expect:
@@ -24,13 +23,13 @@
     ansible_become_pass: "{{ default_user_new_pass }}"
 
 - name: Copy Ansible server pubkey to remote machine
-  when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
+  when: connect_rs is unreachable
   delegate_to: 127.0.0.1
   become: no
   command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
 
 - name: Generate SSH keys
-  when: connect_rs is unreachable and inventory_hostname not in groups['virtualbox']
+  when: connect_rs is unreachable
   openssh_keypair:
     path: /home/ubuntu/.ssh/id_rsa
 
