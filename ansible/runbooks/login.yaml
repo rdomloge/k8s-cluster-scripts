@@ -7,7 +7,6 @@
 - name: Change password on initial login
   when: connect_rs is unreachable
   delegate_to: 127.0.0.1
-  become: no
   expect:
     command: sshpass -p {{ default_user_default_pass }} ssh {{ default_user }}@{{ ansible_host }}
     timeout: 60
@@ -15,7 +14,15 @@
         "Current password:": "{{ default_user_default_pass }}"
         "New password:": "{{ default_user_new_pass }}"
         "Retype new password:": "{{ default_user_new_pass }}"
-  register: status
+
+- name: Add host to known_hosts
+  when: connect_rs is unreachable
+  delegate_to: 127.0.0.1
+  expect:
+    command: ssh -oStrictHostKeyChecking=no {{ default_user }}@{{ ansible_host }} sleep 0
+    timeout: 5
+    responses:
+      (?i)password: "{{ default_user_new_pass }}"
 
 - name: Change 'become' pass, to match login password
   connection: local
@@ -28,7 +35,19 @@
   become: no
   command: sshpass -p {{ default_user_new_pass }} ssh {{ default_user }}@{{ ansible_host }} "bash -c 'echo {{ pubkey }} > /home/ubuntu/.ssh/authorized_keys'"
 
-- name: Generate SSH keys
+
+- name: Speed up SSH logins # uncomment the SSH line to make logins much quicker
+  become: yes
+  #become_method: sudo
+  lineinfile:
+    state: present
+    backrefs: yes
+    backup: yes
+    path: /etc/ssh/sshd_config
+    regexp: '^(#UseDNS no)$'
+    line: '\1UseDNS no'
+
+- name: Generate SSH keys on the host
   when: connect_rs is unreachable
   openssh_keypair:
     path: /home/ubuntu/.ssh/id_rsa

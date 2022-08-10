@@ -36,35 +36,35 @@
   apt: update_cache=true cache_valid_time=3600
     #upgrade: dist
   
-- name: Install essentials - part 1
+- name: Install essentials
   become: yes
   apt:
     pkg: 
+    - pip
+    - vim
     - htop
     - net-tools
-    - vim
-    state: present
-
-- name: Install essentials - part 2
-  become: yes
-  apt:
-    pkg:
     - nfs-kernel-server # needed for mounting the NAS NFS shares
     state: present
-
-- name: Install essentials - part 3
-  become: yes
-  apt:
-    pkg:
-    - pip
-    state: present
-
-- name: Install python modules
-  become: yes
-  pip:
-    name: pexpect
+  async: 2000
+  poll: 0
+  register: install_progress
 
 - name: Set hostname
   become: yes
   hostname:
     name: "{{ inventory_hostname }}"
+
+- name: Wait for installs
+  become: yes
+  async_status:
+    jid: "{{ install_progress.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 50
+  delay: 30
+
+- name: Install python modules
+  become: yes
+  pip:
+    name: pexpect

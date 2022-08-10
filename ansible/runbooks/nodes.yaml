@@ -19,7 +19,7 @@
         (?i)password: "{{ default_user_new_pass }}"
 
 - name: Join node to cluster
-  command: "k3sup join --ip {{ ansible_default_ipv4.address }} --server-ip {{ master }} --user ubuntu --k3s-version={{ version }}"
+  command: "./k3sup join --ip {{ ansible_default_ipv4.address }} --server-ip {{ master }} --user ubuntu --k3s-version={{ version }}"
   delegate_to: "{{ groups['master'][0] }}"
 
 - name: Taint for low power/memory

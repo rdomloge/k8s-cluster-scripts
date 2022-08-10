@@ -1,15 +1,3 @@
-- name: Check if we need to generate a key for root (needed for k3sup install)
-  become: yes
-  stat:
-    path: /root/.ssh/id_rsa.pub
-  register: rsa_keypair
-
-- name: Generate keypair for root
-  when: not rsa_keypair.stat.exists
-  become: yes
-  openssh_keypair:
-    path: /root/.ssh/id_rsa
-
 - name: Download k3sup
   get_url:
     url: https://get.k3sup.dev 
@@ -23,34 +11,17 @@
     path: "{{ k3sup_download_location }}"
     state: absent
   
-- name: Copy to bin [ARM]
+- name: Copy to bin
   become: yes
   when: inventory_hostname not in groups['virtualbox']
   copy:
-    src: k3sup-arm64
+    src: "{{ item }}"
     dest: /usr/local/bin/k3sup
     remote_src: yes
     owner: ubuntu
     group: ubuntu
     mode: u=rwx,g=rx,o=r
-
-- name: Copy to bin [AMD]
-  become: yes
-  when: inventory_hostname in groups['virtualbox']
-  copy:
-    src: k3sup
-    dest: /usr/local/bin/k3sup
-    remote_src: yes
-    owner: ubuntu
-    group: ubuntu
-    mode: u=rwx,g=rx,o=r
-
-- name: Get master to add its pubkey to its own known hosts # could NOT get this to work correctly by generating a key pair and using the builtin support for known_host
-  expect:
-    command: "ssh ubuntu@{{ ansible_default_ipv4.address }} sleep 0"
-    responses:
-      (?i)Are you sure: "yes"
-      (?i)password: "{{ default_user_new_pass }}"
+    with_fileglob: (k3sup|k3sup-arm64) # depending on whether it's an ARM or AMD platform, different files are downloaded
 
 - name: Load master key (so we can use it in the next step)
   slurp:
@@ -68,7 +39,7 @@
 - name: Install master node - k3sup
   become: yes
   become_method: sudo
-  command: "k3sup install --local --k3s-version={{ version }}"
+  command: "./k3sup install --local --k3s-version={{ version }}"
 
 - name: Make config file readable by ubuntu so we can run kubectl without sudo
   become: yes

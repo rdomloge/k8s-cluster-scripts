@@ -1,25 +1,34 @@
----
-- name: Bootstrap - first login, key exchange, disable unattended upgrade
-  hosts: all
+- name: Add the file that disables the 'newer kernel' warnings from the following installer
+  when: ansible_lsb.major_release|int >= 22
+  become: yes
+  lineinfile:
+    create: yes
+    path: /etc/needrestart/conf.d/silence_kernel.conf
+    line: $nrconf{kernelhints} = 0;
 
-  # Variables
-  vars_files:
-  - vars.yml
-    
+## This installer pops up a dialog telling the user something about requiring a reboot and this is the only way to
+## stop Ansible hanging otherwise.
+- name: Install bits missing in Ubuntu 22 that k3s needs
+  when: ansible_lsb.major_release|int >= 22
+  become: yes
+  apt:
+    pkg:
+    - linux-modules-extra-raspi
+  async: 1000
+  poll: 0
+  register: install_kernel_extras
 
-  tasks:
-
-    ## This installer pops up a dialog telling the user something about requiring a reboot and this is the only way to
-    ## stop Ansible hanging otherwise.
-    - name: Install bits missing in Ubuntu 22 that k3s needs
-      shell: yes | sudo DEBIAN_FRONTEND=noninteractive apt install -y -q -q linux-modules-extra-raspi # needed for vxlan support in Ubuntu 22+
-      # become: yes
-      # command: apt install -y -q -q linux-modules-extra-raspi
-      environment:
-        DEBIAN_FRONTEND: noninteractive
-    
-    - name: Reboot for new kernel after adding linux-modules-extra-raspi
-      become: yes
-      become_user: root
-      reboot:
-        reboot_timeout: 120
+- name: Wait for install to complete
+  become: yes
+  async_status:
+    jid: "{{ install_kernel_extras.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  delay: 30
+  retries: 30
+  
+- name: Reboot for new kernel after adding linux-modules-extra-raspi
+  when: ansible_lsb.major_release|int >= 22
+  become: yes
+  reboot:
+    reboot_timeout: 500

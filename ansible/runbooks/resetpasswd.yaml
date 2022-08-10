@@ -1,0 +1,22 @@
+---
+- name: Rewind 
+  gather_facts: false
+  hosts: nodes
+  vars_files:
+  - vars.yml
+  
+  tasks:
+    - name: Change password back to default
+      delegate_to: 127.0.0.1
+      expect:
+        command: sshpass -p {{ default_user_new_pass }} ssh -oStrictHostKeyChecking=no {{ default_user }}@{{ ansible_host }} passwd
+        timeout: 60
+        responses:
+          "Current password:": "{{ default_user_new_pass }}"
+          "New password:": "{{ default_user_default_pass }}"
+          "Retype new password:": "{{ default_user_default_pass }}"
+
+    - name: Force change password
+      delegate_to: 127.0.0.1
+      command: sshpass -p {{ default_user_default_pass }} ssh -oStrictHostKeyChecking=no {{ default_user }}@{{ ansible_host }} sudo passwd --expire ubuntu
+  
