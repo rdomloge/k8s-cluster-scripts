@@ -1,5 +1,5 @@
 HOSTS_MNT="--mount type=bind,source="${PWD}"/hosts,target=/etc/ansible/hosts"
-YAML_PB_MNT="--mount type=bind,source="${PWD}/runbooks",target=/yaml"
+YAML_PB_MNT="--mount type=bind,source="${PWD}/runbooks/cluster",target=/yaml"
 CFG_MNT="--mount type=bind,source="${PWD}"/ansible.cfg,target=/etc/ansible/ansible.cfg"
 VARS_MNT="--mount type=bind,source="${PWD}"/vars.yml,target=/vars.yml"
 

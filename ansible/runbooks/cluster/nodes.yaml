@@ -1,7 +1,7 @@
 - name: Fetch master node pubkey
   slurp:
     src: /home/ubuntu/.ssh/id_rsa.pub
-  delegate_to: "{{ groups['master'][0] }}"
+  delegate_to: "{{ master }}"
   register: master_pubkey
 
 - name: Write master pubkey to authorized_keys
@@ -11,7 +11,7 @@
     create: yes
 
 - name: Get master to add pubkey to known hosts # could NOT get this to work correctly by generating a key pair and using the builtin support for known_host
-  delegate_to: "{{ groups['master'][0] }}"
+  delegate_to: "{{ master }}"
   expect:
     command: "ssh ubuntu@{{ ansible_default_ipv4.address }} sleep 0"
     responses:
@@ -19,12 +19,12 @@
         (?i)password: "{{ default_user_new_pass }}"
 
 - name: Join node to cluster
-  command: "./k3sup join --ip {{ ansible_default_ipv4.address }} --server-ip {{ master }} --user ubuntu --k3s-version={{ version }}"
-  delegate_to: "{{ groups['master'][0] }}"
+  delegate_to: "{{ master }}"
+  command: "k3sup join --ip {{ ansible_default_ipv4.address }} --server-ip {{ master }} --user ubuntu --k3s-version={{ version }}"
 
 - name: Taint for low power/memory
   when: inventory_hostname in groups['low_power_nodes']
-  delegate_to: "{{ groups['master'][0] }}"
+  delegate_to: "{{ master }}"
   command: "kubectl taint nodes {{ inventory_hostname }} {{ item }}:NoSchedule"
   with_items:
     - cpu=low
@@ -32,7 +32,7 @@
 
 - name: Taint for 32-bit
   when: inventory_hostname in groups['bit_32_nodes']
-  delegate_to: "{{ groups['master'][0] }}"
+  delegate_to: "{{ master }}"
   command: "kubectl taint nodes {{ inventory_hostname }} {{ item }}:NoSchedule"
   with_items:
     - bit=32

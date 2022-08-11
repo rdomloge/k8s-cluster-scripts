@@ -1,0 +1,29 @@
+---
+
+- name: Print pubkey for copy to GitHub
+  hosts: master
+  gather_facts: false
+  tasks:
+  - shell: |
+      cat /home/ubuntu/.ssh/id_rsa.pub
+
+- name: Wait for user prompt to continue (once GitHub is ready)
+  hosts: master
+  gather_facts: false
+  tasks:
+  - pause:
+      prompt: Please hit [ENTER] once you have configured the key above in GitHub
+
+- name: Clone repos
+  hosts: master  
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: repos.yaml
+
+- name: Run catholicon
+  hosts: master  
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: catholicon.yaml

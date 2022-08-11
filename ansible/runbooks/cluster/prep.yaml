@@ -12,7 +12,7 @@
 
 # This could be later, but would require a second reboot, which is slow. We do it now so no need for extra reboots
 - name: Set OS properties necessary for running containers
-  when: inventory_hostname not in groups['virtualbox']
+  when: inventory_hostname not in groups['virtualbox_nodes']
   become: yes
   become_user: root
   lineinfile:
@@ -27,7 +27,7 @@
   become_user: root
   reboot:
     reboot_timeout: 600
-  when: inventory_hostname not in groups['virtualbox'] and unattendedupgrade.changed or ospropertieschanged.changed
+  when: inventory_hostname not in groups['virtualbox_nodes'] and unattendedupgrade.changed or ospropertieschanged.changed
 # ---------------------------------------------------------------------------------------------------
 
 

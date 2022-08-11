@@ -1,20 +1,38 @@
 [master]
-ansible-k8s-master-1 ansible_host=10.0.0.99 ansible_sudo_pass=temporary111 ansible_become_pass=temporary111
+k8s-master-1 ansible_host=10.0.0.12 ansible_sudo_pass=temporary111 ansible_become_pass=temporary111
 
-[nodes]
-ansible-k8s-node-1 ansible_host=10.0.0.13 ansible_sudo_pass=ubuntu
-ansible-k8s-node-2 ansible_host=10.0.0.14 ansible_sudo_pass=ubuntu
+[rpi_nodes]
+k8s-node-1 ansible_host=10.0.0.9 ansible_sudo_pass=ubuntu
+k8s-node-2 ansible_host=10.0.0.10 ansible_sudo_pass=ubuntu
+k8s-node-3 ansible_host=10.0.0.11 ansible_sudo_pass=ubuntu
+k8s-node-4 ansible_host=10.0.0.15 ansible_sudo_pass=ubuntu
+k8s-node-5 ansible_host=10.0.0.16 ansible_sudo_pass=ubuntu
+k8s-node-6 ansible_host=10.0.0.17 ansible_sudo_pass=ubuntu
+k8s-node-7 ansible_host=10.0.0.18 ansible_sudo_pass=ubuntu
+k8s-node-8 ansible_host=10.0.0.19 ansible_sudo_pass=ubuntu
+k8s-node-9 ansible_host=10.0.0.20 ansible_sudo_pass=ubuntu
+k8s-node-10 ansible_host=10.0.0.13 ansible_sudo_pass=ubuntu # rpi 2
+k8s-node-11 ansible_host=10.0.0.14 ansible_sudo_pass=ubuntu # rpi 3
 
-[virtualbox]
-ansible-k8s-master-1 ansible_host=10.0.0.99 ansible_sudo_pass=temporary111
+[virtualbox_nodes]
+k8s-node-12 ansible_host=10.0.0.99 ansible_sudo_pass=temporary111 # virtualbox 
+
+[all_nodes:children]
+virtualbox_nodes
+rpi_nodes
+
+[all_rpis:children]
+rpi_nodes
+master
 
 [low_power_nodes]
-ansible-k8s-node-1
-ansible-k8s-node-2
+k8s-node-10
+k8s-node-11
 
 [bit_32_nodes]
-ansible-k8s-node-1
+k8s-node-10
 
 [all:children]
-nodes
+rpi_nodes
 master
+virtualbox_nodes

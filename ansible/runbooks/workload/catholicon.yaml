@@ -1,0 +1,30 @@
+- name: Start catholicon monolith
+  command: kubectl apply -f repos/catholicon-kubernetes/monolith/{{ item }}.yaml
+  with_items:
+  - namespace
+  - service
+  - pod
+
+- name: Start catholicon
+  command: kubectl apply -f repos/catholicon-kubernetes/individual/{{ item }}.yaml
+  with_items:
+  - namespace
+  - mongo-pod
+  - seasons-pod
+  - catholicon-pod    
+  - club-pod
+  - matchcard-pod
+  - sync-pod
+  - club-service
+  - catholicon-service
+  - function-bridge-service
+  - matchcard-service
+  - seasons-service
+  - postgres-service
+  - sync-debug-service
+  - mongo-service
+  - matchcard-hpa
+  - seasons-hpa
+  - club-hpa
+  - postgres-pod
+  - ingress

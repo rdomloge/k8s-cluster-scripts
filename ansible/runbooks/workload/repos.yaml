@@ -1,0 +1,56 @@
+- name: Install requirements for workloads
+  become: yes
+  apt:
+    pkg: 
+    - git
+    state: present
+  async: 2000
+  poll: 0
+  register: install_progress
+
+- name: Install python modules required for running kubernetes commands from Ansible
+  become: yes
+  pip:
+    name: 
+      - kubernetes
+      - openshift
+
+- name: Wait for installs
+  become: yes
+  async_status:
+    jid: "{{ install_progress.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 50
+  delay: 2
+
+- name: Make repos dir
+  file:
+    path: repos
+    state: directory
+    mode: 0755 # 7=rwx 5=r-x 5=r-x
+
+- name: Create status convenience script
+  lineinfile:
+    create: yes
+    path: /home/ubuntu/repos/status.sh
+    line: for d in */; do cd $d; echo $d; git status --porcelain; cd ..; done
+    mode: 0755
+
+- name: Clone repos
+  git: repo=git@github.com:rdomloge/{{ item }}.git dest=repos/{{ item }} accept_hostkey=yes key_file=~/.ssh/id_rsa
+  with_items:
+    - minecraft-server
+    - catholicon-fn-club-fixture-agg
+    - catholicon-kubernetes
+    - heliumevents
+    - pihole-k8s
+    - entrydns
+    - k8s-cluster-scripts
+    - bobcat-rebooter
+    - cloudflare_dns
+    - hds-container
+
+- name: Clone 3rd party repods
+  git: repo=https://github.com/ExpediaGroup/mittens.git dest=repos/mittens accept_hostkey=yes key_file=~/.ssh/id_rsa
+

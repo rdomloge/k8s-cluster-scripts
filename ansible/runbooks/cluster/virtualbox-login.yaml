@@ -44,6 +44,7 @@
 
 - name: Remove need for sudo password
   become: yes
+  become_method: sudo
   lineinfile:
     path: /etc/sudoers
     state: present

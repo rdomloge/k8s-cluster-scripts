@@ -6,22 +6,25 @@
 - name: Bootstrap k3sup
   command: sh "{{ k3sup_download_location }}"
 
-- name: Clean up
+- name: Clean up download
   file: 
     path: "{{ k3sup_download_location }}"
     state: absent
   
 - name: Copy to bin
   become: yes
-  when: inventory_hostname not in groups['virtualbox']
   copy:
-    src: "{{ item }}"
+    src: k3sup-arm64
     dest: /usr/local/bin/k3sup
     remote_src: yes
     owner: ubuntu
     group: ubuntu
     mode: u=rwx,g=rx,o=r
-    with_fileglob: (k3sup|k3sup-arm64) # depending on whether it's an ARM or AMD platform, different files are downloaded
+
+- name: Delete local k3sup, now it's in /usr/local/bin
+  file: 
+    path: k3sup-arm64
+    state: absent
 
 - name: Load master key (so we can use it in the next step)
   slurp:
@@ -39,7 +42,7 @@
 - name: Install master node - k3sup
   become: yes
   become_method: sudo
-  command: "./k3sup install --local --k3s-version={{ version }}"
+  command: "k3sup install --local --k3s-version={{ version }}"
 
 - name: Make config file readable by ubuntu so we can run kubectl without sudo
   become: yes
@@ -47,4 +50,7 @@
     path: /etc/rancher/k3s/k3s.yaml
     owner: ubuntu
     group: ubuntu
+
+- name: Configure the location of the kubeconfig file so that Helm doesn't shit the bed
+  shell: "echo export KUBECONFIG=/etc/rancher/k3s/k3s.yaml > .bash_profile"
     
