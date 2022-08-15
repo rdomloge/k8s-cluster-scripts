@@ -68,3 +68,8 @@
   become: yes
   pip:
     name: pexpect
+
+- name: Set initial Vim params
+  lineinfile:
+    path: ~/.vimrc
+    line: colorscheme blue
