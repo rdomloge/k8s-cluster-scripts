@@ -1,0 +1,36 @@
+- name: Setup Dad's main MC server
+  command: kubectl apply -f repos/minecraft-server/k8s/{{ item }}.yaml
+  with_items:
+  - namespace
+  - minecraft-nfs
+  - minecraft-storage
+  - minecraft-service
+  - minecraft
+
+- name: Setup Dad's secondary MC server
+  command: kubectl apply -f repos/minecraft-server/k8s/sb/{{ item }}.yaml
+  with_items:
+  - namespace
+  - skyblock-nfs
+  - skyblock-storage
+  - skyblock-service
+  - skyblock
+
+- name: Setup Meg's MC server
+  command: kubectl apply -f repos/minecraft-server/k8s/meg/{{ item }}.yaml
+  with_items:
+  - namespace
+  - meg-minecraft-nfs
+  - meg-minecraft-storage
+  - meg-minecraft-service
+  #- meg-minecraft-ingress
+  - meg-minecraft  
+
+- name: Setup Fin's MC server
+  command: kubectl apply -f repos/minecraft-server/k8s/fin/{{ item }}.yaml
+  with_items:
+  - namespace
+  - fin-minecraft-nfs
+  - fin-minecraft-storage
+  - fin-minecraft-service
+  - fin-minecraft
