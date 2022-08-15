@@ -1,0 +1,14 @@
+- name: Cloudflare DNS (catholicon.uk)
+  command: kubectl apply -f repos/cloudflare_dns/{{ item }}.yaml
+  with_items:
+  - namespace
+  - secret
+  - configmap
+  - pod
+
+- name: EntryDNS (rdomloge.entrydns.org)
+  command: kubectl apply -f repos/entrydns/{{ item }}.yaml
+  with_items:
+  - namespace
+  - secret
+  - cron
