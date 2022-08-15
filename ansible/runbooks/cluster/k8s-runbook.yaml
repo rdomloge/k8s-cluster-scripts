@@ -1,47 +1,47 @@
 ---
-# - name: Login for rPis
-#   hosts: rpi_nodes  
-#   vars_files:
-#   - vars.yml
-#   gather_facts: false
-#   tasks:
-#     - import_tasks: login.yaml
+- name: Login for rPis
+  hosts: all_rpis  
+  vars_files:
+  - vars.yml
+  gather_facts: false
+  tasks:
+    - import_tasks: login.yaml
 
-# - name: Login for virtualbox
-#   hosts: virtualbox_nodes  
-#   vars_files:
-#   - vars.yml
-#   gather_facts: false
-#   tasks:
-#     - import_tasks: virtualbox-login.yaml
+- name: Login for virtualbox
+  hosts: virtualbox_nodes  
+  vars_files:
+  - vars.yml
+  gather_facts: false
+  tasks:
+    - import_tasks: virtualbox-login.yaml
 
-# - name: Prep
-#   hosts: all
-#   vars_files:
-#   - vars.yml
-#   tasks:        
-#     - import_tasks: prep.yaml
+- name: Prep
+  hosts: all
+  vars_files:
+  - vars.yml
+  tasks:        
+    - import_tasks: prep.yaml
     
-# - name: Configure master
-#   hosts: master
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: master.yaml
+- name: Configure master
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: master.yaml
 
-# - name: Add rpi missing kernel modules for vxlan
-#   hosts: all_rpis
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: ubuntu2204.yaml
+- name: Add rpi missing kernel modules for vxlan
+  hosts: all_rpis
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: ubuntu2204.yaml
     
-# - name: Configure nodes
-#   hosts: all_nodes
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: nodes.yaml
+- name: Configure nodes
+  hosts: all_nodes
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: nodes.yaml
 
 - name: Setup monitoring
   hosts: master
