@@ -51,6 +51,6 @@
     - cloudflare_dns
     - hds-container
 
-- name: Clone 3rd party repods
+- name: Clone 3rd party repos
   git: repo=https://github.com/ExpediaGroup/mittens.git dest=repos/mittens accept_hostkey=yes key_file=~/.ssh/id_rsa
 
