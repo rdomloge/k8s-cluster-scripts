@@ -11,11 +11,11 @@ k8s-node-6 ansible_host=10.0.0.17 ansible_sudo_pass=ubuntu
 k8s-node-7 ansible_host=10.0.0.18 ansible_sudo_pass=ubuntu
 k8s-node-8 ansible_host=10.0.0.19 ansible_sudo_pass=ubuntu
 k8s-node-9 ansible_host=10.0.0.20 ansible_sudo_pass=ubuntu
-k8s-node-10 ansible_host=10.0.0.13 ansible_sudo_pass=ubuntu # rpi 2
-k8s-node-11 ansible_host=10.0.0.14 ansible_sudo_pass=ubuntu # rpi 3
+k8s-node-10-rpi2 ansible_host=10.0.0.13 ansible_sudo_pass=ubuntu # rpi 2
+k8s-node-11-rpi3 ansible_host=10.0.0.14 ansible_sudo_pass=ubuntu # rpi 3
 
 [virtualbox_nodes]
-k8s-node-12 ansible_host=10.0.0.99 ansible_sudo_pass=temporary111 # virtualbox 
+#k8s-node-12 ansible_host=10.0.0.99 ansible_sudo_pass=temporary111 # virtualbox 
 
 [all_nodes:children]
 virtualbox_nodes
@@ -26,11 +26,11 @@ rpi_nodes
 master
 
 [low_power_nodes]
-k8s-node-10
-k8s-node-11
+k8s-node-10-rpi2
+k8s-node-11-rpi3
 
 [bit_32_nodes]
-k8s-node-10
+k8s-node-10-rpi2
 
 [all:children]
 rpi_nodes
