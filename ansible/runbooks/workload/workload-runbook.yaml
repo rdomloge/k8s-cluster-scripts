@@ -1,53 +1,53 @@
 ---
 
-# - hosts: master
-#   gather_facts: false
-#   tasks:
-#   - name: Printout master pubkey
-#     shell: |
-#       cat /home/ubuntu/.ssh/id_rsa.pub
+- hosts: master
+  gather_facts: false
+  tasks:
+  - name: Printout master pubkey
+    shell: |
+      cat /home/ubuntu/.ssh/id_rsa.pub
 
-# - hosts: master
-#   gather_facts: false
-#   tasks:
-#   - name: Wait for user prompt to continue (once GitHub is ready)
-#     pause:
-#       prompt: Please hit [ENTER] once you have configured the key above in GitHub
+- hosts: master
+  gather_facts: false
+  tasks:
+  - name: Wait for user prompt to continue (once GitHub is ready)
+    pause:
+      prompt: Please hit [ENTER] once you have configured the key above in GitHub
 
-# - name: Clone repos
-#   hosts: master  
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: repos.yaml
+- name: Clone repos
+  hosts: master  
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: repos.yaml
 
-# - name: Run catholicon
-#   hosts: master  
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: catholicon.yaml
+- name: Run catholicon
+  hosts: master  
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: catholicon.yaml
 
-# - name: Helium
-#   hosts: master
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: helium.yaml
+- name: Helium
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: helium.yaml
 
-# - name: Bobcat rebooter
-#   hosts: master
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: bobcat-rebooter.yaml
+- name: Bobcat rebooter
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: bobcat-rebooter.yaml
 
-# - name: Minecraft
-#   hosts: master
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: minecraft.yaml
+- name: Minecraft
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: minecraft.yaml
 
 - name: OpenFaaS
   hosts: master
@@ -56,16 +56,16 @@
   tasks:
     - import_tasks: openfaas.yaml
 
-# - hosts: master
-#   gather_facts: false
-#   tasks:
-#   - name: Please update secrets.yaml with the base64 encoded key from entrydns.net (get the token and pase into www.base64encode.org), then manually update the secrets file
-#     pause:
-#       prompt: Please hit [ENTER] once you have configured the secrets yaml
+- hosts: master
+  gather_facts: false
+  tasks:
+  - name: Please update secrets.yaml with the base64 encoded key from entrydns.net (get the token and pase into www.base64encode.org), then manually update the secrets file
+    pause:
+      prompt: Please hit [ENTER] once you have configured the secrets yaml
 
-# - name: DNS
-#   hosts: master
-#   vars_files:
-#   - vars.yml
-#   tasks:
-#     - import_tasks: dns.yaml
+- name: DNS
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: dns.yaml
