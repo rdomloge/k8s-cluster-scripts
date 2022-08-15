@@ -1,0 +1,5 @@
+- name: Setup cron job for rebooting miner periodically
+  command: kubectl apply -f repos/bobcat-rebooter/{{ item }}.yaml
+  with_items:
+  - namespace
+  - cron
