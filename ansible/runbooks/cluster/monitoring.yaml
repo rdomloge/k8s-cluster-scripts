@@ -28,7 +28,7 @@
   shell: kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
 - name: Install the prometheus chart
-  shell: helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring
+  shell: helm upgrade --install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring # use upgrade rather than install for idempotency
   environment: 
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   
