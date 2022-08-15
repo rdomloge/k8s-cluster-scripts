@@ -1,0 +1,34 @@
+- name: Check if Arkade is already installed
+  stat:
+    path: /usr/local/bin/arkade
+  register: arkade
+
+- name: Download Arkade
+  when: arkade.stat.exists == false
+  get_url: 
+    url: https://dl.get-arkade.dev 
+    dest: "{{ arkade_installer }}"
+    mode: 775
+
+- name: Install Arkade
+  when: arkade.stat.exists == false
+  become: true
+  command: "{{ arkade_installer }}"
+
+- name: Delete Arkade installer
+  when: arkade.stat.exists == false
+  file: 
+    path: "{{ arkade_installer }}"
+    state: absent
+
+- name: Install OpenFaas
+  command: arkade install openfaas --gateways 2 --load-balancer false --set faasIdler.dryRun=false
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Print out admin password
+  shell: 'echo $(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)'
+
+- name: Pause for capture of admin password just printed out
+  pause:
+    prompt: Please hit [ENTER] once you have copied the admin password above
