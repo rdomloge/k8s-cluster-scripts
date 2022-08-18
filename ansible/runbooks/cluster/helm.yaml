@@ -1,0 +1,17 @@
+- name: Download Helm installer script
+  get_url:
+    url: 'https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3'
+    dest: ./get_helm.sh
+    mode: 0700
+
+- name: Install Helm
+  shell: ./get_helm.sh
+
+- name: Delete installer script
+  shell: rm ./get_helm.sh
+
+- name: Add the prometheus helm repo
+  shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+- name: Update the new Helm repo
+  shell: helm repo update

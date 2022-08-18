@@ -37,7 +37,13 @@
     line: for d in */; do cd $d; echo $d; git status --porcelain; cd ..; done
     mode: 0755
 
+- name: Check to see if we need to clone the repos
+  stat:
+    path: repos/catholicon
+  register: example_repo
+
 - name: Clone repos
+  when: example_repo.stat.exists
   git: repo=git@github.com:rdomloge/{{ item }}.git dest=repos/{{ item }} accept_hostkey=yes key_file=~/.ssh/id_rsa
   with_items:
     - minecraft-server
@@ -50,6 +56,7 @@
     - bobcat-rebooter
     - cloudflare_dns
     - hds-container
+    - certificate-manager
 
 - name: Clone 3rd party repos
   git: repo=https://github.com/ExpediaGroup/mittens.git dest=repos/mittens accept_hostkey=yes key_file=~/.ssh/id_rsa

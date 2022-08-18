@@ -42,8 +42,8 @@
 - name: Install master node - k3sup
   become: yes
   become_method: sudo
-  command: "k3sup install --local --k3s-version={{ version }}"
-
+  command: "k3sup install --local --k3s-version={{ version }} --k3s-extra-args '--no-deploy traefik'" # install without traefik do we can use nginx for ingress
+  
 - name: Make config file readable by ubuntu so we can run kubectl without sudo
   become: yes
   file:

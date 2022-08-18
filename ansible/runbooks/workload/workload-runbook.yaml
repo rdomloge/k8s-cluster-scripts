@@ -69,3 +69,10 @@
   - vars.yml
   tasks:
     - import_tasks: dns.yaml
+
+- name: Cert Manager
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: cert-manager.yaml

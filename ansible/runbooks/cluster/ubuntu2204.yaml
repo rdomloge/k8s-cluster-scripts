@@ -1,3 +1,5 @@
+## This installer pops up a dialog telling the user something about requiring a reboot and this is the only way to
+## stop Ansible hanging otherwise.
 - name: Add the file that disables the 'newer kernel' warnings from the following installer
   when: ansible_lsb.major_release|int >= 22
   become: yes
@@ -6,10 +8,12 @@
     path: /etc/needrestart/conf.d/silence_kernel.conf
     line: $nrconf{kernelhints} = 0;
 
-## This installer pops up a dialog telling the user something about requiring a reboot and this is the only way to
-## stop Ansible hanging otherwise.
+- name: Determine whether we need to install the extra module
+  shell: modprobe vxlan
+  register: modprob_output
+
 - name: Install bits missing in Ubuntu 22 that k3s needs
-  when: ansible_lsb.major_release|int >= 22
+  when: (ansible_lsb.major_release|int >= 22) and (modprob_output.stdout is search('not found')) # the join concatenates the multiple lines of stdout
   become: yes
   apt:
     pkg:
@@ -19,6 +23,7 @@
   register: install_kernel_extras
 
 - name: Wait for install to complete
+  when: (ansible_lsb.major_release|int >= 22) and (modprob_output.stdout is search('not found')) # the join concatenates the multiple lines of stdout
   become: yes
   async_status:
     jid: "{{ install_kernel_extras.ansible_job_id }}"
@@ -28,7 +33,7 @@
   retries: 30
   
 - name: Reboot for new kernel after adding linux-modules-extra-raspi
-  when: ansible_lsb.major_release|int >= 22
+  when: (ansible_lsb.major_release|int >= 22) and (modprob_output.stdout is search('not found')) # the join concatenates the multiple lines of stdout
   become: yes
   reboot:
     reboot_timeout: 500

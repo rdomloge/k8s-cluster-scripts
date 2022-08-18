@@ -1,0 +1,48 @@
+- name: Create namespace (if needed)
+  shell: kubectl create namespace cert-manager --dry-run=client -o yaml | kubectl apply -f -
+
+- name: Download cert-manager yaml and change the image references to their ARM counterparts
+  shell: |
+    curl -sL https://github.com/jetstack/cert-manager/releases/download/v1.9.1/cert-manager.yaml \
+    | sed -r 's/(image:.*):(v.*)$/\1-arm:\2/g' > "{{ certmgr_filename }}"
+
+- name: Apply the doctored YAML to install cert-manager
+  shell: "kubectl apply -f {{ certmgr_filename }}"
+
+
+
+- name: Install cmctl (cert-manager CLI)
+  shell: "OS=$(go env GOOS); ARCH=$(go env GOARCH); curl -sSL -o {{ cmctl_filename }} https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cmctl-$OS-$ARCH.tar.gz"
+
+- name: Untar
+  unarchive:
+    src: "/home/ubuntu/{{ cmctl_filename }}"
+    dest: /home/ubuntu
+    remote_src: yes
+
+- name: Copy to bin
+  become: yes
+  copy:
+    src: /home/ubuntu/cmctl
+    dest: /usr/local/bin
+    remote_src: yes
+    mode: 755
+    owner: ubuntu
+    group: ubuntu
+
+- name: Cleanup
+  file:
+    path: /home/ubuntu/{{ item }}
+    state: absent
+  with_items:
+    - "{{ certmgr_filename }}"
+    - LICENSES
+    - cmctl
+    - cmctl.tar.gz
+
+
+# - name: Setup certificate request
+#   command: kubectl apply -f repos/certificate-manager/{{ item }}.yaml
+#   with_items:
+#   - cluster-issuer
+#   - certificate

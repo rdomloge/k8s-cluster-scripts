@@ -33,7 +33,7 @@
 
 - name: Update
   become: yes
-  apt: update_cache=true cache_valid_time=3600
+  apt: update_cache=true cache_valid_time=604800 # 7 days
     #upgrade: dist
   
 - name: Install essentials
@@ -43,6 +43,7 @@
     - pip
     - vim
     - htop
+    - golang-go
     - net-tools
     - nfs-kernel-server # needed for mounting the NAS NFS shares
     state: present
@@ -73,3 +74,4 @@
   lineinfile:
     path: ~/.vimrc
     line: colorscheme blue
+    create: yes

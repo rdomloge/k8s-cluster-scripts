@@ -43,7 +43,21 @@
   tasks:
     - import_tasks: nodes.yaml
 
-- name: Setup monitoring
+- name: Install Helm
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: helm.yaml
+
+- name: Install Nginx ingress controller (needs Helm)
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: nginx-ingress.yaml
+
+- name: Setup monitoring (needs Helm)
   hosts: master
   vars_files:
   - vars.yml

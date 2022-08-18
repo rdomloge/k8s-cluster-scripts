@@ -1,1 +1,4 @@
+forks: 12
 arkade_installer: /home/ubuntu/arkade_installer.sh
+certmgr_filename: cert-manager-arm.yaml
+cmctl_filename: cmctl.tar.gz
