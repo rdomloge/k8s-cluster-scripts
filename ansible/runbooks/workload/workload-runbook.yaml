@@ -56,13 +56,6 @@
   tasks:
     - import_tasks: openfaas.yaml
 
-- hosts: master
-  gather_facts: false
-  tasks:
-  - name: Please update secrets.yaml with the base64 encoded key from entrydns.net (get the token and pase into www.base64encode.org), then manually update the secrets file
-    pause:
-      prompt: Please hit [ENTER] once you have configured the secrets yaml
-
 - name: DNS
   hosts: master
   vars_files:
