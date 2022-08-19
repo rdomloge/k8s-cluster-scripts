@@ -10,10 +10,11 @@
 
 - name: Determine whether we need to install the extra module
   shell: modprobe vxlan
-  register: modprob_output
+  register: modprob_result
+  ignore_errors: yes
 
 - name: Install bits missing in Ubuntu 22 that k3s needs
-  when: (ansible_lsb.major_release|int >= 22) and (modprob_output.stdout is search('not found')) # the join concatenates the multiple lines of stdout
+  when: (ansible_lsb.major_release|int >= 22) and (modprob_result.rc != 0)
   become: yes
   apt:
     pkg:
@@ -23,7 +24,7 @@
   register: install_kernel_extras
 
 - name: Wait for install to complete
-  when: (ansible_lsb.major_release|int >= 22) and (modprob_output.stdout is search('not found')) # the join concatenates the multiple lines of stdout
+  when: (ansible_lsb.major_release|int >= 22) and (modprob_result.rc != 0)
   become: yes
   async_status:
     jid: "{{ install_kernel_extras.ansible_job_id }}"
@@ -33,7 +34,7 @@
   retries: 30
   
 - name: Reboot for new kernel after adding linux-modules-extra-raspi
-  when: (ansible_lsb.major_release|int >= 22) and (modprob_output.stdout is search('not found')) # the join concatenates the multiple lines of stdout
+  when: (ansible_lsb.major_release|int >= 22) and (modprob_result.rc != 0)
   become: yes
   reboot:
     reboot_timeout: 500

@@ -22,13 +22,6 @@
   tasks:        
     - import_tasks: prep.yaml
     
-- name: Configure master
-  hosts: master
-  vars_files:
-  - vars.yml
-  tasks:
-    - import_tasks: master.yaml
-
 - name: Add rpi missing kernel modules for vxlan
   hosts: all_rpis
   vars_files:
@@ -36,6 +29,13 @@
   tasks:
     - import_tasks: ubuntu2204.yaml
     
+- name: Configure master
+  hosts: master
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: master.yaml
+
 - name: Configure nodes
   hosts: all_nodes
   vars_files:
