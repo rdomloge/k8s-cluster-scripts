@@ -8,6 +8,7 @@
 - name: Install the nginx-ingress chart
   shell: helm upgrade --install ingress-nginx ingress-nginx \
    --repo https://kubernetes.github.io/ingress-nginx \
+   --set ingressClassResource.default=true \
    --namespace nginx-ingress # use upgrade rather than install for idempotency
   environment: 
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
