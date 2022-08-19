@@ -1,3 +1,8 @@
+- name: Please update secrets.yaml with the base64 encoded key from entrydns.net/cloudflare.com (get the token and pase into www.base64encode.org), then manually update the secrets file
+  pause:
+    prompt: Please hit [ENTER] once you have configured the secrets yaml
+
+
 - name: Cloudflare DNS (catholicon.uk)
   command: kubectl apply -f repos/cloudflare_dns/{{ item }}.yaml
   with_items:
@@ -5,6 +10,7 @@
   - secret
   - configmap
   - pod
+
 
 - name: EntryDNS (rdomloge.entrydns.org)
   command: kubectl apply -f repos/entrydns/{{ item }}.yaml
