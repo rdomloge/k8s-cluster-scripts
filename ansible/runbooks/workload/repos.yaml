@@ -64,9 +64,9 @@
 - name: Config git
   lineinfile:
     line: "{{ item }}"
-    with_items:
-      - [user]
-      - {{ git_config_email }}
-      - {{ git_config_name }}
     path: /home/ubuntu/.gitconfig
     create: yes
+  with_items:
+    - \[user\]
+    - "{{ git_config_email }}"
+    - "{{ git_config_name }}"
