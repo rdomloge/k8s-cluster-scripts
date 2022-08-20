@@ -25,6 +25,17 @@
   command: arkade install openfaas --gateways 2 --load-balancer false --set faasIdler.dryRun=false
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  async: 2000
+  poll: 0
+  register: of_install_progress
+
+- name: Wait for OpenFaas install
+  async_status:
+    jid: "{{ of_install_progress.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 30
+  delay: 5
 
 - name: Print out admin password
   shell: 'echo $(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)'
