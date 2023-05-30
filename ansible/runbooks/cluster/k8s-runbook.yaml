@@ -21,6 +21,13 @@
   - vars.yml
   tasks:        
     - import_tasks: prep.yaml
+
+- name: log2ram
+  hosts: all
+  vars_files:
+  - vars.yml
+  tasks:
+    - import_tasks: log2ram.yaml
     
 - name: Add rpi missing kernel modules for vxlan
   hosts: all_rpis

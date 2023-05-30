@@ -15,3 +15,4 @@ helm_file: ./helm.tar.gz
 helm_dest: helm_installer
 helm_unarchived_executable_path: linux-arm64/helm
 helm_bin_path: /usr/local/bin/helm
+log2ram_installer: /home/ubuntu/log2ram-latest

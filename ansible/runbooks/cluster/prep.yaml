@@ -46,6 +46,7 @@
     - golang-go
     - net-tools
     - nfs-kernel-server # needed for mounting the NAS NFS shares
+    - rsync # needed for log2ram
     state: present
   async: 2000
   poll: 0

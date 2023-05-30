@@ -1,0 +1,35 @@
+- name: Check if it's installed yet
+  become: yes
+  stat: path=/etc/systemd/system/log2ram.service
+  register: service_status
+
+- name: Create log2ram folder
+  when: not service_status.stat.exists
+  file: 
+    path: "{{ log2ram_installer }}"
+    state: directory
+
+- name: Download and untar installer
+  when: not service_status.stat.exists
+  unarchive: 
+    src: https://github.com/azlux/log2ram/archive/master.tar.gz
+    dest: "{{ log2ram_installer }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1] # don't include the top folder
+
+- name: Set size # default of 128M is too low
+  lineinfile:
+    path: "{{ log2ram_installer }}/log2ram.conf"
+    regexp: '^SIZE=128M'
+    line: SIZE=256M
+
+- name: Turn of emailing
+  lineinfile:
+    path: "{{ log2ram_installer }}/log2ram.conf"
+    regexp: '^MAIL=true'
+    line: MAIL=false
+
+- name: Install log2ram
+  when: not service_status.stat.exists
+  become: yes
+  shell: cd "{{ log2ram_installer }}" && ./install.sh
