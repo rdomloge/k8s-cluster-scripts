@@ -2,14 +2,14 @@
   pause:
     prompt: Please hit [ENTER] once you have configured the secrets yaml
 
-
-- name: Cloudflare DNS (catholicon.uk)
-  command: kubectl apply -f repos/cloudflare_dns/{{ item }}.yaml
-  with_items:
-  - namespace
-  - secret
-  - configmap
-  - pod
+# Commented out because not actually using CF ATM
+# - name: Cloudflare DNS (catholicon.uk)
+#   command: kubectl apply -f repos/cloudflare_dns/{{ item }}.yaml
+#   with_items:
+#   - namespace
+#   - secret
+#   - configmap
+#   - pod
 
 
 - name: EntryDNS (rdomloge.entrydns.org)

@@ -41,8 +41,7 @@
     - cmctl.tar.gz
 
 
-# - name: Setup certificate request
-#   command: kubectl apply -f repos/certificate-manager/{{ item }}.yaml
-#   with_items:
-#   - cluster-issuer
-#   - certificate
+- name: Setup certificate request
+  command: kubectl apply -f repos/certificate-manager/{{ item }}.yaml
+  with_items:
+  - cluster-issuer

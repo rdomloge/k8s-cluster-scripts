@@ -28,12 +28,12 @@
   tasks:
     - import_tasks: catholicon.yaml
 
-- name: Helium
-  hosts: master
-  vars_files:
-  - vars.yml
-  tasks:
-    - import_tasks: helium.yaml
+# - name: Helium
+#   hosts: master
+#   vars_files:
+#   - vars.yml
+#   tasks:
+#     - import_tasks: helium.yaml
 
 - name: Bobcat rebooter
   hosts: master
