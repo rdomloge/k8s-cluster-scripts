@@ -6,7 +6,7 @@
 - name: Download Arkade
   when: arkade.stat.exists == false
   get_url: 
-    url: https://dl.get-arkade.dev 
+    url: https://get.arkade.dev 
     dest: "{{ arkade_installer }}"
     mode: 775
 
