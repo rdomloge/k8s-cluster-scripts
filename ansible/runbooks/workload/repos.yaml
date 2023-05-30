@@ -67,6 +67,6 @@
     path: /home/ubuntu/.gitconfig
     create: yes
   with_items:
-    - \[user\]
+    - "[user]"
     - "{{ git_config_email }}"
     - "{{ git_config_name }}"
