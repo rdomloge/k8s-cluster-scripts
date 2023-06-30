@@ -71,7 +71,14 @@
   pip:
     name: pexpect
 
-- name: Set initial Vim params
+- name: Set initial Vim params (Ubuntu)
+  lineinfile:
+    path: ~/.vimrc
+    line: colorscheme blue
+    create: yes
+
+- name: Set initial Vim params (root/sudo)
+  become: yes
   lineinfile:
     path: ~/.vimrc
     line: colorscheme blue
